@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+
 public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher, MouseWheelListener, MouseMotionListener{
     private ArrayList<Point> points = new ArrayList<>();
     private ArrayList<Point> shell = new ArrayList<>();
@@ -16,6 +17,9 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private ArrayList<Circle> win = new ArrayList<>();
     private JPanel controlPanel;
     private JTextField xField, yField;
+    private double startX;
+    private double startY;
+
 
     public MyPanel() {
         addMouseListener(this);
@@ -126,10 +130,6 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
 
     @Override
     public void mouseClicked(MouseEvent e) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
         points.add(new Point(e.getX(), e.getY()));
         updateShell();
         findcircle();
@@ -137,7 +137,14 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {
+        startX = e.getX();
+        startY = e.getY();
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
 
     @Override
     public void mouseEntered(MouseEvent e) {}
@@ -286,7 +293,17 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
 
     @Override
     public void mouseDragged(MouseEvent e) {
-
+        for (Point p : points) {
+            double a = p.x;
+            double b = p.y;
+            p.x = a + e.getX() - startX;
+            p.y = b + e.getY() - startY;
+        }
+        updateShell();
+        findcircle();
+        repaint();
+        startX = 0;
+        startY = 0;
     }
 
     @Override
