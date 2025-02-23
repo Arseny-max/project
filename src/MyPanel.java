@@ -19,6 +19,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private JTextField xField, yField;
     private double startX;
     private double startY;
+    private boolean dragging;
 
 
     public MyPanel() {
@@ -30,7 +31,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     }
 
     private void createControlPanel() {
-        controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         controlPanel.setPreferredSize(new Dimension(200, 60));
         xField = new JTextField(5);
         xField.setPreferredSize(new Dimension(50, 25));
@@ -60,14 +61,21 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 }
             }
         });
-        controlPanel.add(fileButton);
+        JButton closeButton = new JButton("Закрыть программу");
+        closeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
 
+        controlPanel.add(fileButton);
         controlPanel.add(new JLabel("X:"));
         controlPanel.add(xField);
         controlPanel.add(new JLabel("Y:"));
         controlPanel.add(yField);
         controlPanel.add(addButton);
-        controlPanel.setBorder(BorderFactory.createTitledBorder(""));
+        controlPanel.add(closeButton);
 
         this.setLayout(new BorderLayout());
         this.add(controlPanel, BorderLayout.NORTH);
@@ -140,10 +148,12 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     public void mousePressed(MouseEvent e) {
         startX = e.getX();
         startY = e.getY();
+        dragging = true;
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        dragging = false;
     }
 
     @Override
@@ -293,17 +303,19 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        for (Point p : points) {
-            double a = p.x;
-            double b = p.y;
-            p.x = a + e.getX() - startX;
-            p.y = b + e.getY() - startY;
+        if (dragging) {
+            for (Point p : points) {
+                double deltaX = e.getX() - startX;
+                double deltaY = e.getY() - startY;
+                p.x += deltaX;
+                p.y += deltaY;
+            }
+            updateShell();
+            findcircle();
+            repaint();
+            startX = e.getX();
+            startY = e.getY();
         }
-        updateShell();
-        findcircle();
-        repaint();
-        startX = 0;
-        startY = 0;
     }
 
     @Override
