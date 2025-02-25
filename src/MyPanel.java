@@ -83,15 +83,24 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private void loadPointsFromFile(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
-            Pattern pattern = Pattern.compile("(\\d+)\\s+(\\d+)");
+
+            Pattern pattern = Pattern.compile("(-?\\d+(?:\\.\\d+)?)\\s+(-?\\d+(?:\\.\\d+)?)");
             while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
                 Matcher matcher = pattern.matcher(line);
-                if(matcher.find()) {
-                    double x = Integer.parseInt(matcher.group(1));
-                    double y = Integer.parseInt(matcher.group(2));
-                    points.add(new Point(x,y));
+                if (matcher.find()) {
+                    try {
+                        double x = Double.parseDouble(matcher.group(1));
+                        double y = Double.parseDouble(matcher.group(2));
+                        points.add(new Point(x, y));
+                    } catch (NumberFormatException e) {
+                        System.err.println("Skipping invalid number format in line: " + line);
+                    }
                 } else {
-                    System.err.println("Skipping invalid line format: " + line);
+                    System.err.println("Skipping invalid line format. Expected two rational numbers separated by spaces: " + line);
                 }
             }
         }
@@ -133,6 +142,9 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             Circle c = win.get(0);
             Ellipse2D.Double circle = new Ellipse2D.Double(c.x - c.r, c.y - c.r, 2 * c.r, 2 * c.r);
             g2d.draw(circle);
+        }
+        for (Point p : points) {
+            System.out.println(p.x + " " + p.y);
         }
     }
 
