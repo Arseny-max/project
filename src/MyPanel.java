@@ -138,13 +138,14 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             }
         }
         g2d.setColor(Color.BLUE);
-        if (!win.isEmpty()) {
-            Circle c = win.get(0);
+//        if (!win.isEmpty()) {
+//            Circle c = win.get(0);
+//            Ellipse2D.Double circle = new Ellipse2D.Double(c.x - c.r, c.y - c.r, 2 * c.r, 2 * c.r);
+//            g2d.draw(circle);
+//        }
+        for (Circle c : goodcircles){
             Ellipse2D.Double circle = new Ellipse2D.Double(c.x - c.r, c.y - c.r, 2 * c.r, 2 * c.r);
             g2d.draw(circle);
-        }
-        for (Point p : points) {
-            System.out.println(p.x + " " + p.y);
         }
     }
 
@@ -267,18 +268,20 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 goodcircles.add(new Circle(circles.get(i).x,circles.get(i).y,circles.get(i).r));
             }
         }
-        int t = 0;
-        for (int i = 0; i < goodcircles.size(); i++){
-            if (goodcircles.get(i).r < goodcircles.get(t).r) {
-                t = i;
-            }
-        }
-        win.add(new Circle(goodcircles.get(t).x, goodcircles.get(t).y, goodcircles.get(t).r));
+        System.out.println(goodcircles.size());
+//        int t = 0;
+//        for (int i = 0; i < goodcircles.size(); i++){
+//            if (goodcircles.get(i).r < goodcircles.get(t).r) {
+//                t = i;
+//            }
+//        }
+//        win.add(new Circle(goodcircles.get(t).x, goodcircles.get(t).y, goodcircles.get(t).r));
     }
     public static boolean allinside(ArrayList<Point> points, Circle circle) {
         for (Point p : points) {
             double distance = distance(p, circle);
             if (distance > circle.r) {
+                System.out.println(p.x+ " " + p.y);
                 return false;
             }
         }
