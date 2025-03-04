@@ -14,6 +14,5 @@ public class Main {
         manager.addKeyEventDispatcher(panel);
         frame.add(panel);
         frame.setVisible(true);
-
     }
 }
