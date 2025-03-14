@@ -233,10 +233,10 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                     double y2 = shell.get(j).y;
                     double x3 = shell.get(k).x;
                     double y3 = shell.get(k).y;
-                    if (((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)) == 0){
+                    double d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+                    if (d == 0){
                         continue;
                     }
-                    double d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
                     double centerX = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1) + (x3 * x3 + y3 * y3) * (y1 - y2)) / d;
                     double centerY = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3) + (x3 * x3 + y3 * y3) * (x2 - x1)) / d;
                     double radius = Math.sqrt(Math.pow(centerX - x1, 2) + Math.pow(centerY - y1, 2));
@@ -275,7 +275,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     public static boolean allinside(ArrayList<Point> shell, Circle circle) {
         for (Point p : shell) {
             double distance = distance(p, circle);
-            if (distance > circle.r + 0.000001) {
+            if (distance > circle.r + 0.000000001) {
                 return false;
             }
         }
