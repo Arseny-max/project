@@ -15,7 +15,6 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private ArrayList<Circle> circles = new ArrayList<>();
     private ArrayList<Circle> goodcircles = new ArrayList<>();
     private ArrayList<Circle> win = new ArrayList<>();
-    private JPanel controlPanel;
     private JTextField xField, yField;
     private double startX;
     private double startY;
@@ -26,13 +25,11 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
-        createControlPanel();
+        createButtons();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
     }
 
-    private void createControlPanel() {
-        controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        controlPanel.setPreferredSize(new Dimension(200, 60));
+    private void createButtons() {
         xField = new JTextField(5);
         xField.setPreferredSize(new Dimension(50, 25));
         yField = new JTextField(5);
@@ -69,16 +66,13 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             }
         });
 
-        controlPanel.add(fileButton);
-        controlPanel.add(new JLabel("X:"));
-        controlPanel.add(xField);
-        controlPanel.add(new JLabel("Y:"));
-        controlPanel.add(yField);
-        controlPanel.add(addButton);
-        controlPanel.add(closeButton);
-
-        this.setLayout(new BorderLayout());
-        this.add(controlPanel, BorderLayout.NORTH);
+        this.add(fileButton);
+        this.add(new JLabel("X:"));
+        this.add(xField);
+        this.add(new JLabel("Y:"));
+        this.add(yField);
+        this.add(addButton);
+        this.add(closeButton);
     }
     private void loadPointsFromFile(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -97,10 +91,10 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                         double y = Double.parseDouble(matcher.group(2));
                         points.add(new Point(x, y));
                     } catch (NumberFormatException e) {
-                        System.err.println("Skipping invalid number format in line: " + line);
+                        JOptionPane.showMessageDialog(this, "Пропуск неверного формата числа в строке: " + line, "Ошибка", JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    System.err.println("Skipping invalid line format. Expected two rational numbers separated by spaces: " + line);
+                    JOptionPane.showMessageDialog(this, "Пропуск недопустимого формата строки. Ожидаются два рациональных числа, разделенных пробелами: " + line, "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -287,7 +281,6 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-
         return false;
     }
 
@@ -326,9 +319,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             startY = e.getY();
         }
     }
-
     @Override
     public void mouseMoved(MouseEvent e) {
-
     }
 }
