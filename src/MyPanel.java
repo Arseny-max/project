@@ -65,6 +65,19 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 System.exit(0);
             }
         });
+        JButton clearButton = new JButton("Удалить всё");
+        clearButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                points.clear();
+                shell.clear();
+                circles.clear();
+                goodcircles.clear();
+                win.clear();
+                repaint();
+            }
+        });
+
 
         this.add(fileButton);
         this.add(new JLabel("X:"));
@@ -72,6 +85,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         this.add(new JLabel("Y:"));
         this.add(yField);
         this.add(addButton);
+        this.add(clearButton);
         this.add(closeButton);
     }
     private void loadPointsFromFile(File file) throws IOException {
