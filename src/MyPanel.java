@@ -4,6 +4,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.awt.geom.Ellipse2D;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +20,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private double startX;
     private double startY;
     private boolean dragging;
+    private boolean deletepoint;
 
 
     public MyPanel() {
@@ -28,7 +30,6 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         createButtons();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
     }
-
     private void createButtons() {
         xField = new JTextField(5);
         xField.setPreferredSize(new Dimension(50, 25));
@@ -77,14 +78,44 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 repaint();
             }
         });
+        JButton deletePointButton = new JButton();
+        deletePointButton.setBorderPainted(false);
+        deletePointButton.setContentAreaFilled(false);
+//        deletePointButton.setFocusPainted(false);
+        ImageIcon rubber = new ImageIcon("data/ластик.png");
+        Image image = rubber.getImage();
+        Image scaledImage = image.getScaledInstance(30, 20, Image.SCALE_SMOOTH);
+        rubber = new ImageIcon(scaledImage);
+        deletePointButton.setIcon(rubber);
+        deletePointButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deletepoint = true;
+            }
+        });
+        JButton cursorButton = new JButton();
+        cursorButton.setBorderPainted(false);
+        cursorButton.setContentAreaFilled(false);
+        ImageIcon cursor = new ImageIcon("data/курсор.png");
+        Image imagecursor = cursor.getImage();
+        Image scaledImagecursor = imagecursor.getScaledInstance(30, 20, Image.SCALE_SMOOTH);
+        cursor = new ImageIcon(scaledImagecursor);
+        cursorButton.setIcon(cursor);
+        cursorButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deletepoint = false;
+            }
+        });
 
-
-        this.add(fileButton);
+        this.add(deletePointButton);
+        this.add(cursorButton);
         this.add(new JLabel("X:"));
         this.add(xField);
         this.add(new JLabel("Y:"));
         this.add(yField);
         this.add(addButton);
+        this.add(fileButton);
         this.add(clearButton);
         this.add(closeButton);
     }
@@ -152,13 +183,28 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             g2d.draw(circle);
         }
     }
-
     @Override
     public void mouseClicked(MouseEvent e) {
-        points.add(new Point(e.getX(), e.getY()));
-        updateShell();
-        findcircle();
-        repaint();
+        if (deletepoint == true){
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
+            Iterator<Point> iterator = points.iterator();
+            while(iterator.hasNext()){
+                Point point = iterator.next();
+                if(distance(point, deletecircle) <= deletecircle.r){
+                    Sound.playSound("data/delete.wav").setVolume(0.9f);
+                    iterator.remove();
+                    updateShell();
+                    findcircle();
+                    repaint();
+                }
+            }
+        }else {
+            points.add(new Point(e.getX(), e.getY()));
+            updateShell();
+            findcircle();
+            repaint();
+            Sound.playSound("data/click.wav").setVolume(1f);
+        }
     }
 
     @Override
@@ -319,18 +365,33 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (dragging) {
-            for (Point p : points) {
-                double deltaX = e.getX() - startX;
-                double deltaY = e.getY() - startY;
-                p.x += deltaX;
-                p.y += deltaY;
+        if (deletepoint == true){
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
+            Iterator<Point> iterator = points.iterator();
+            while(iterator.hasNext()){
+                Point point = iterator.next();
+                if(distance(point, deletecircle) <= deletecircle.r){
+                    Sound.playSound("data/delete.wav").setVolume(0.9f);
+                    iterator.remove();
+                    updateShell();
+                    findcircle();
+                    repaint();
+                }
             }
-            updateShell();
-            findcircle();
-            repaint();
-            startX = e.getX();
-            startY = e.getY();
+        }else {
+            if (dragging) {
+                for (Point p : points) {
+                    double deltaX = e.getX() - startX;
+                    double deltaY = e.getY() - startY;
+                    p.x += deltaX;
+                    p.y += deltaY;
+                }
+                updateShell();
+                findcircle();
+                repaint();
+                startX = e.getX();
+                startY = e.getY();
+            }
         }
     }
     @Override
