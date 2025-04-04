@@ -79,12 +79,12 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             }
         });
         JButton deletePointButton = new JButton();
-        deletePointButton.setBorderPainted(false);
         deletePointButton.setContentAreaFilled(false);
-//        deletePointButton.setFocusPainted(false);
+        deletePointButton.setBorder(BorderFactory.createLineBorder(Color.black));
+        deletePointButton.setFocusPainted(false);
         ImageIcon rubber = new ImageIcon("data/ластик.png");
         Image image = rubber.getImage();
-        Image scaledImage = image.getScaledInstance(30, 20, Image.SCALE_SMOOTH);
+        Image scaledImage = image.getScaledInstance(40, 25, Image.SCALE_SMOOTH);
         rubber = new ImageIcon(scaledImage);
         deletePointButton.setIcon(rubber);
         deletePointButton.addActionListener(new ActionListener() {
@@ -107,7 +107,13 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 deletepoint = false;
             }
         });
+        Box addpointbox  = Box.createHorizontalBox();
+        addpointbox.add(addButton);
+        addpointbox.add(xField);
+        addpointbox.add(yField);
+        addpointbox.setBorder(BorderFactory.createTitledBorder("Группа кнопок"));
 
+        this.add(addpointbox);
         this.add(deletePointButton);
         this.add(cursorButton);
         this.add(new JLabel("X:"));
@@ -186,7 +192,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     @Override
     public void mouseClicked(MouseEvent e) {
         if (deletepoint == true){
-            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 7);
             Iterator<Point> iterator = points.iterator();
             while(iterator.hasNext()){
                 Point point = iterator.next();
@@ -366,7 +372,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     @Override
     public void mouseDragged(MouseEvent e) {
         if (deletepoint == true){
-            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 7);
             Iterator<Point> iterator = points.iterator();
             while(iterator.hasNext()){
                 Point point = iterator.next();
