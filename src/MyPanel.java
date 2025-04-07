@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -21,6 +23,8 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private double startY;
     private boolean dragging;
     private boolean deletepoint;
+    private  boolean showshell = false;
+    private int  show = 0;
 
 
     public MyPanel() {
@@ -35,11 +39,22 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         xField.setPreferredSize(new Dimension(50, 25));
         yField = new JTextField(5);
         yField.setPreferredSize(new Dimension(50, 25));
+        Border bevelBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Color.GRAY);
+        Border compoundBevel = BorderFactory.createCompoundBorder(
+                bevelBorder,
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
+        Border compoundBevelpic = BorderFactory.createCompoundBorder(
+                bevelBorder,
+                BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        );
 
         JButton addButton = new JButton("Добавить точку");
         addButton.addActionListener(e -> addPointFromFields());
+        addButton.setFocusPainted(false);
 
         JButton fileButton = new JButton("Открыть файл");
+        fileButton.setFocusPainted(false);
         fileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -60,6 +75,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             }
         });
         JButton closeButton = new JButton("Закрыть программу");
+        closeButton.setFocusPainted(false);
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -67,6 +83,8 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
             }
         });
         JButton clearButton = new JButton("Удалить всё");
+        clearButton.setFocusPainted(false);
+        clearButton.setFocusPainted(false);
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -76,16 +94,15 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 goodcircles.clear();
                 win.clear();
                 repaint();
+                Sound.playSound("data/deleteall.wav").setVolume(0.9f);
             }
         });
         JButton deletePointButton = new JButton();
+        deletePointButton.setBorderPainted(false);
         deletePointButton.setContentAreaFilled(false);
-        deletePointButton.setBorder(BorderFactory.createLineBorder(Color.black));
-        deletePointButton.setFocusPainted(false);
         ImageIcon rubber = new ImageIcon("data/ластик.png");
         Image image = rubber.getImage();
-        Image scaledImage = image.getScaledInstance(40, 25, Image.SCALE_SMOOTH);
-        rubber = new ImageIcon(scaledImage);
+        rubber = new ImageIcon(image);
         deletePointButton.setIcon(rubber);
         deletePointButton.addActionListener(new ActionListener() {
             @Override
@@ -98,8 +115,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         cursorButton.setContentAreaFilled(false);
         ImageIcon cursor = new ImageIcon("data/курсор.png");
         Image imagecursor = cursor.getImage();
-        Image scaledImagecursor = imagecursor.getScaledInstance(30, 20, Image.SCALE_SMOOTH);
-        cursor = new ImageIcon(scaledImagecursor);
+        cursor = new ImageIcon(imagecursor);
         cursorButton.setIcon(cursor);
         cursorButton.addActionListener(new ActionListener() {
             @Override
@@ -107,23 +123,64 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 deletepoint = false;
             }
         });
-        Box addpointbox  = Box.createHorizontalBox();
-        addpointbox.add(addButton);
-        addpointbox.add(xField);
-        addpointbox.add(yField);
-        addpointbox.setBorder(BorderFactory.createTitledBorder("Группа кнопок"));
+        JButton showshellButton = new JButton("Показать выпуклую оболочку");
+        showshellButton.setFocusPainted(false);
+        showshellButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                show += 1;
+                if(show %2 == 0) {
+                    showshell = false;
+                    showshellButton.setText("Показать выпуклую оболочку");
+                    repaint();
+                }
+                if(show %2 == 1){
+                    showshell = true;
+                    showshellButton.setText("Убрать выпуклую оболочку");
+                    repaint();
+                }
+            }
+        });
+        Box Addpoint = Box.createHorizontalBox();
+        Addpoint.setBorder(compoundBevel);
+        Addpoint.add(new JLabel("X:"));
+        Addpoint.add(xField);
+        Addpoint.add(new JLabel("Y:"));
+        Addpoint.add(yField);
+        Addpoint.add(addButton);
 
-        this.add(addpointbox);
-        this.add(deletePointButton);
-        this.add(cursorButton);
-        this.add(new JLabel("X:"));
-        this.add(xField);
-        this.add(new JLabel("Y:"));
-        this.add(yField);
-        this.add(addButton);
-        this.add(fileButton);
-        this.add(clearButton);
-        this.add(closeButton);
+        Box forclearButton = Box.createHorizontalBox();
+        forclearButton.setBorder(compoundBevel);
+        forclearButton.add(clearButton);
+
+        Box forcloseButton = Box.createHorizontalBox();
+        forcloseButton.setBorder(compoundBevel);
+        forcloseButton.add(closeButton);
+
+        Box forshowshellButton = Box.createHorizontalBox();
+        forshowshellButton.setBorder(compoundBevel);
+        forshowshellButton.add(showshellButton);
+
+        Box forfileButton = Box.createHorizontalBox();
+        forfileButton.setBorder(compoundBevel);
+        forfileButton.add(fileButton);
+
+        Box fordeletePointButton = Box.createHorizontalBox();
+        fordeletePointButton.setBorder(compoundBevelpic);
+        fordeletePointButton.add(deletePointButton);
+
+        Box forcursorButton = Box.createHorizontalBox();
+        forcursorButton.setBorder(compoundBevelpic);
+        forcursorButton.add(cursorButton);
+
+        this.add(fordeletePointButton);
+        this.add(forcursorButton);
+        this.add(forshowshellButton);
+        this.add(Addpoint);
+        this.add(forfileButton);
+        this.add(forclearButton);
+        this.add(forcloseButton);
+
     }
     private void loadPointsFromFile(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -174,12 +231,14 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         for (Point p : points) {
             g2d.fillOval((int)p.x - 2, (int)p.y - 2, 4, 4);
         }
-        g2d.setColor(Color.RED);
-        if (shell.size() > 1) {
-            for (int i = 0; i < shell.size(); i++) {
-                Point p1 = shell.get(i);
-                Point p2 = shell.get((i + 1) % shell.size());
-                g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
+        if (showshell == true) {
+            g2d.setColor(Color.RED);
+            if (shell.size() > 1) {
+                for (int i = 0; i < shell.size(); i++) {
+                    Point p1 = shell.get(i);
+                    Point p2 = shell.get((i + 1) % shell.size());
+                    g2d.drawLine((int) p1.x, (int) p1.y, (int) p2.x, (int) p2.y);
+                }
             }
         }
         g2d.setColor(Color.BLUE);
@@ -192,7 +251,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     @Override
     public void mouseClicked(MouseEvent e) {
         if (deletepoint == true){
-            Circle deletecircle = new Circle(e.getX(), e.getY(), 7);
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
             Iterator<Point> iterator = points.iterator();
             while(iterator.hasNext()){
                 Point point = iterator.next();
@@ -372,7 +431,7 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     @Override
     public void mouseDragged(MouseEvent e) {
         if (deletepoint == true){
-            Circle deletecircle = new Circle(e.getX(), e.getY(), 7);
+            Circle deletecircle = new Circle(e.getX(), e.getY(), 5);
             Iterator<Point> iterator = points.iterator();
             while(iterator.hasNext()){
                 Point point = iterator.next();
