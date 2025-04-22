@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -16,8 +17,8 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     private ArrayList<Point> points = new ArrayList<>();
     private ArrayList<Point> shell = new ArrayList<>();
     private ArrayList<Circle> circles = new ArrayList<>();
-    private ArrayList<Circle> goodcircles = new ArrayList<>();
-    private ArrayList<Circle> win = new ArrayList<>();
+    private ArrayList<Circle> enclosingCircles = new ArrayList<>();
+    private ArrayList<Circle> minСircle = new ArrayList<>();
     private JTextField xField, yField;
     private double startX;
     private double startY;
@@ -34,153 +35,144 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
         createButtons();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
     }
-    private void createButtons() {
-        xField = new JTextField(5);
-        xField.setPreferredSize(new Dimension(50, 25));
-        yField = new JTextField(5);
-        yField.setPreferredSize(new Dimension(50, 25));
-        Border bevelBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Color.GRAY);
-        Border compoundBevel = BorderFactory.createCompoundBorder(
-                bevelBorder,
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        );
-        Border compoundBevelpic = BorderFactory.createCompoundBorder(
-                bevelBorder,
-                BorderFactory.createEmptyBorder(0, 0, 0, 0)
-        );
 
-        JButton addButton = new JButton("Добавить точку");
-        addButton.addActionListener(e -> addPointFromFields());
-        addButton.setFocusPainted(false);
+private void createButtons() {
+    Border bevelBorder = createBevelBorder();
+    Border compoundBevel = createCompoundBevel(bevelBorder, 5);
+    Border compoundBevelpic = createCompoundBevel(bevelBorder, 0);
 
-        JButton fileButton = new JButton("Открыть файл");
-        fileButton.setFocusPainted(false);
-        fileButton.addActionListener(new ActionListener() {
+    createInputFields();
+
+    this.add(createIconButtonPanel("ластик.png", true));
+    this.add(createIconButtonPanel("курсор.png", false));
+    this.add(createShowShellButton(compoundBevel));
+    this.add(createAddPointPanel(compoundBevel));
+    this.add(createFileButtonPanel(compoundBevel));
+    this.add(createClearButtonPanel(compoundBevel));
+    this.add(createCloseButtonPanel(compoundBevel));
+}
+
+    private Border createBevelBorder() {
+        return BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Color.GRAY);
+    }
+
+    private Border createCompoundBevel(Border border, int padding) {
+        return BorderFactory.createCompoundBorder(
+                border,
+                BorderFactory.createEmptyBorder(padding, padding, padding, padding)
+        );
+    }
+
+    private void createInputFields() {
+        xField = createTextField(50);
+        yField = createTextField(50);
+    }
+
+    private JTextField createTextField(int width) {
+        JTextField field = new JTextField(5);
+        field.setPreferredSize(new Dimension(width, 25));
+        return field;
+    }
+
+    private Box createIconButtonPanel(String iconPath, boolean isDelete) {
+        JButton button = new JButton();
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setIcon(new ImageIcon("data/" + iconPath));
+        button.addActionListener(e -> deletepoint = isDelete);
+
+        Box box = Box.createHorizontalBox();
+        box.setBorder(createCompoundBevel(createBevelBorder(), 0));
+        box.add(button);
+        return box;
+    }
+
+    private Box createAddPointPanel(Border border) {
+        Box box = Box.createHorizontalBox();
+        box.setBorder(border);
+        box.add(new JLabel("X:"));
+        box.add(xField);
+        box.add(new JLabel("Y:"));
+        box.add(yField);
+        box.add(createAddButton());
+        return box;
+    }
+
+    private JButton createAddButton() {
+        JButton button = new JButton("Добавить точку");
+        button.setFocusPainted(false);
+        button.addActionListener(e -> addPointFromFields());
+        return button;
+    }
+
+    private Box createActionButtonPanel(String title, Border border, ActionListener action) {
+        JButton button = new JButton(title);
+        button.setFocusPainted(false);
+        button.addActionListener(action);
+
+        Box box = Box.createHorizontalBox();
+        box.setBorder(border);
+        box.add(button);
+        return box;
+    }
+
+    private Box createFileButtonPanel(Border border) {
+        return createActionButtonPanel("Открыть файл", border, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Text Files", "txt"));
-                int result = fileChooser.showOpenDialog(MyPanel.this);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    try {
-                        loadPointsFromFile(selectedFile);
-                        updateShell();
-                        findcircle();
-                        repaint();
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(MyPanel.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+                handleFileSelection();
             }
         });
-        JButton closeButton = new JButton("Закрыть программу");
-        closeButton.setFocusPainted(false);
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
+    }
+
+    private Box createClearButtonPanel(Border border) {
+        return createActionButtonPanel("Удалить всё", border, e -> {
+            points.clear();
+            shell.clear();
+            circles.clear();
+            enclosingCircles.clear();
+            minСircle.clear();
+            repaint();
+            Sound.playSound("data/deleteall.wav").setVolume(0.9f);
         });
-        JButton clearButton = new JButton("Удалить всё");
-        clearButton.setFocusPainted(false);
-        clearButton.setFocusPainted(false);
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                points.clear();
-                shell.clear();
-                circles.clear();
-                goodcircles.clear();
-                win.clear();
+    }
+
+    private Box createCloseButtonPanel(Border border) {
+        return createActionButtonPanel("Закрыть программу", border, e -> System.exit(0));
+    }
+
+    private Box createShowShellButton(Border border) {
+        JButton button = new JButton("Показать выпуклую оболочку");
+        button.setFocusPainted(false);
+        button.addActionListener(e -> toggleShellVisibility(button));
+
+        Box box = Box.createHorizontalBox();
+        box.setBorder(border);
+        box.add(button);
+        return box;
+    }
+
+    private void toggleShellVisibility(JButton button) {
+        show++;
+        showshell = (show % 2 == 1);
+        button.setText(showshell ? "Убрать выпуклую оболочку" : "Показать выпуклую оболочку");
+        repaint();
+    }
+
+    private void handleFileSelection() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+        if (fileChooser.showOpenDialog(MyPanel.this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                loadPointsFromFile(fileChooser.getSelectedFile());
+                updateShell();
+                findcircle();
                 repaint();
-                Sound.playSound("data/deleteall.wav").setVolume(0.9f);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(MyPanel.this,
+                        "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
             }
-        });
-        JButton deletePointButton = new JButton();
-        deletePointButton.setBorderPainted(false);
-        deletePointButton.setContentAreaFilled(false);
-        ImageIcon rubber = new ImageIcon("data/ластик.png");
-        Image image = rubber.getImage();
-        rubber = new ImageIcon(image);
-        deletePointButton.setIcon(rubber);
-        deletePointButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deletepoint = true;
-            }
-        });
-        JButton cursorButton = new JButton();
-        cursorButton.setBorderPainted(false);
-        cursorButton.setContentAreaFilled(false);
-        ImageIcon cursor = new ImageIcon("data/курсор.png");
-        Image imagecursor = cursor.getImage();
-        cursor = new ImageIcon(imagecursor);
-        cursorButton.setIcon(cursor);
-        cursorButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deletepoint = false;
-            }
-        });
-        JButton showshellButton = new JButton("Показать выпуклую оболочку");
-        showshellButton.setFocusPainted(false);
-        showshellButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                show += 1;
-                if(show %2 == 0) {
-                    showshell = false;
-                    showshellButton.setText("Показать выпуклую оболочку");
-                    repaint();
-                }
-                if(show %2 == 1){
-                    showshell = true;
-                    showshellButton.setText("Убрать выпуклую оболочку");
-                    repaint();
-                }
-            }
-        });
-        Box Addpoint = Box.createHorizontalBox();
-        Addpoint.setBorder(compoundBevel);
-        Addpoint.add(new JLabel("X:"));
-        Addpoint.add(xField);
-        Addpoint.add(new JLabel("Y:"));
-        Addpoint.add(yField);
-        Addpoint.add(addButton);
-
-        Box forclearButton = Box.createHorizontalBox();
-        forclearButton.setBorder(compoundBevel);
-        forclearButton.add(clearButton);
-
-        Box forcloseButton = Box.createHorizontalBox();
-        forcloseButton.setBorder(compoundBevel);
-        forcloseButton.add(closeButton);
-
-        Box forshowshellButton = Box.createHorizontalBox();
-        forshowshellButton.setBorder(compoundBevel);
-        forshowshellButton.add(showshellButton);
-
-        Box forfileButton = Box.createHorizontalBox();
-        forfileButton.setBorder(compoundBevel);
-        forfileButton.add(fileButton);
-
-        Box fordeletePointButton = Box.createHorizontalBox();
-        fordeletePointButton.setBorder(compoundBevelpic);
-        fordeletePointButton.add(deletePointButton);
-
-        Box forcursorButton = Box.createHorizontalBox();
-        forcursorButton.setBorder(compoundBevelpic);
-        forcursorButton.add(cursorButton);
-
-        this.add(fordeletePointButton);
-        this.add(forcursorButton);
-        this.add(forshowshellButton);
-        this.add(Addpoint);
-        this.add(forfileButton);
-        this.add(forclearButton);
-        this.add(forcloseButton);
-
+        }
     }
     private void loadPointsFromFile(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -241,9 +233,11 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
                 }
             }
         }
+
+        g2d.setStroke(new BasicStroke(1.5f));
         g2d.setColor(Color.BLUE);
-        if (!win.isEmpty()) {
-            Circle c = win.get(0);
+        if (!minСircle.isEmpty()) {
+            Circle c = minСircle.get(0);
             Ellipse2D.Double circle = new Ellipse2D.Double(c.x - c.r, c.y - c.r, 2 * c.r, 2 * c.r);
             g2d.draw(circle);
         }
@@ -319,78 +313,119 @@ public class MyPanel extends JPanel implements MouseListener, KeyEventDispatcher
     }
 
     private int orientation(Point p, Point q, Point r) {
-        double a = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+        double a = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
         if (a == 0) return 0;
-        if (a > 0) {
+        if (a < 0) {
             return 1;
         } else {
             return 2;
         }
     }
     private void findcircle() {
-        win.clear();
-        circles.clear();
-        goodcircles.clear();
-        if(shell.size() < 2){
-            return;
-        }
-        for (int i = 0; i < shell.size(); i++) {
-            for (int j = 0; j < shell.size(); j++) {
-                if (i == j) {
-                    continue;
-                }
-                for (int k = 0; k < shell.size(); k++) {
-                    if (k == j) {
-                        continue;
-                    }
-                    if (i == k) {
-                        continue;
-                    }
-                    double x1 = shell.get(i).x;
-                    double y1 = shell.get(i).y;
-                    double x2 = shell.get(j).x;
-                    double y2 = shell.get(j).y;
-                    double x3 = shell.get(k).x;
-                    double y3 = shell.get(k).y;
-                    double d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
-                    if (d == 0){
-                        continue;
-                    }
-                    double centerX = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1) + (x3 * x3 + y3 * y3) * (y1 - y2)) / d;
-                    double centerY = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3) + (x3 * x3 + y3 * y3) * (x2 - x1)) / d;
-                    double radius = Math.sqrt(Math.pow(centerX - x1, 2) + Math.pow(centerY - y1, 2));
-                    circles.add(new Circle(centerX,centerY,radius));
-                }
-            }
-        }
-        for (int i = 0; i < shell.size(); i++) {
-            for (int j = 0; j < shell.size(); j++) {
-                if (i == j) {
-                    continue;
-                }
-                double x1 = shell.get(i).x;
-                double y1 = shell.get(i).y;
-                double x2 = shell.get(j).x;
-                double y2 = shell.get(j).y;
-                double centerX = (x1+x2)/2;
-                double centerY = (y1+y2)/2;
-                double radius = Math.sqrt((x1-centerX)*(x1-centerX)+(y1-centerY)*(y1-centerY));
-                circles.add(new Circle(centerX,centerY,radius));
-            }
-        }
-        for (int i = 0; i < circles.size(); i++){
-            if (allinside(shell, circles.get(i))){
-                goodcircles.add(new Circle(circles.get(i).x,circles.get(i).y,circles.get(i).r));
-            }
-        }
-        int t = 0;
-        for (int i = 0; i < goodcircles.size(); i++){
-            if (goodcircles.get(i).r < goodcircles.get(t).r) {
-                t = i;
-            }
-        }
-        win.add(new Circle(goodcircles.get(t).x, goodcircles.get(t).y, goodcircles.get(t).r));
+        clearCollections();
+        if (shell.size() < 2) return;
+
+        processAllTriples();
+        processAllPairs();
+        filterAndSelectMinCircle();
     }
+
+    private void clearCollections() {
+        minСircle.clear();
+        circles.clear();
+        enclosingCircles.clear();
+    }
+
+    private void processAllTriples() {
+        for (int i = 0; i < shell.size(); i++) {
+            for (int j = i + 1; j < shell.size(); j++) {
+                for (int k = j + 1; k < shell.size(); k++) {
+                    processThreePoints(i, j, k);
+                }
+            }
+        }
+    }
+
+    private void processThreePoints(int i, int j, int k) {
+        Point p1 = shell.get(i);
+        Point p2 = shell.get(j);
+        Point p3 = shell.get(k);
+
+        Circle circle = calculateCircleFromThreePoints(p1, p2, p3);
+        if (circle != null) {
+            circles.add(circle);
+        }
+    }
+
+    private Circle calculateCircleFromThreePoints(Point p1, Point p2, Point p3) {
+        double x1 = p1.x, y1 = p1.y;
+        double x2 = p2.x, y2 = p2.y;
+        double x3 = p3.x, y3 = p3.y;
+
+        double d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+        if (d == 0) return null;
+
+        double centerX = ((x1*x1 + y1*y1)*(y2-y3) + (x2*x2 + y2*y2)*(y3-y1) + (x3*x3 + y3*y3)*(y1-y2)) / d;
+        double centerY = ((x1*x1 + y1*y1)*(x3-x2) + (x2*x2 + y2*y2)*(x1-x3) + (x3*x3 + y3*y3)*(x2-x1)) / d;
+        double radius = Math.hypot(centerX - x1, centerY - y1);
+
+        return new Circle(centerX, centerY, radius);
+    }
+
+    private void processAllPairs() {
+        for (int i = 0; i < shell.size(); i++) {
+            for (int j = i + 1; j < shell.size(); j++) {
+                processTwoPoints(i, j);
+            }
+        }
+    }
+
+    private void processTwoPoints(int i, int j) {
+        Point p1 = shell.get(i);
+        Point p2 = shell.get(j);
+        Circle circle = calculateCircleFromTwoPoints(p1, p2);
+        circles.add(circle);
+    }
+
+    private Circle calculateCircleFromTwoPoints(Point p1, Point p2) {
+        double centerX = (p1.x + p2.x) / 2;
+        double centerY = (p1.y + p2.y) / 2;
+        double radius = Math.hypot(p1.x - centerX, p1.y - centerY);
+        return new Circle(centerX, centerY, radius);
+    }
+
+    private void filterAndSelectMinCircle() {
+        filterValidCircles();
+        if (!enclosingCircles.isEmpty()) {
+            addMinCircleToWin();
+        }
+    }
+
+    private void filterValidCircles() {
+        for (Circle circle : circles) {
+            if (allinside(shell, circle)) {
+                enclosingCircles.add(new Circle(circle.x, circle.y, circle.r));
+            }
+        }
+    }
+
+    private void addMinCircleToWin() {
+        int minIndex = findMinRadiusIndex();
+        minСircle.add(new Circle(enclosingCircles.get(minIndex).x,
+                enclosingCircles.get(minIndex).y,
+                enclosingCircles.get(minIndex).r));
+    }
+
+    private int findMinRadiusIndex() {
+        int minIndex = 0;
+        for (int i = 1; i < enclosingCircles.size(); i++) {
+            if (enclosingCircles.get(i).r < enclosingCircles.get(minIndex).r) {
+                minIndex = i;
+            }
+        }
+        return minIndex;
+    }
+
     public static boolean allinside(ArrayList<Point> shell, Circle circle) {
         for (Point p : shell) {
             double distance = distance(p, circle);
