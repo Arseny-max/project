@@ -33,10 +33,6 @@ public class Sound implements AutoCloseable {
         }
     }
 
-    public boolean isReleased() {
-        return released;
-    }
-
     public boolean isPlaying() {
         return playing;
     }
@@ -60,11 +56,6 @@ public class Sound implements AutoCloseable {
         play(true);
     }
 
-    public void stop() {
-        if (playing) {
-            clip.stop();
-        }
-    }
 
     public void close() {
         if (clip != null)
@@ -84,23 +75,6 @@ public class Sound implements AutoCloseable {
         float min = volumeControl.getMinimum();
         float max = volumeControl.getMaximum();
         volumeControl.setValue((max-min)*x+min);
-    }
-
-    public float getVolume() {
-        float v = volumeControl.getValue();
-        float min = volumeControl.getMinimum();
-        float max = volumeControl.getMaximum();
-        return (v-min)/(max-min);
-    }
-
-    public void join() {
-        if (!released) return;
-        synchronized(clip) {
-            try {
-                while (playing)
-                    clip.wait();
-            } catch (InterruptedException exc) {}
-        }
     }
 
     public static Sound playSound(String path) {
